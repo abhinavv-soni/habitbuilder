@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChartBarIcon, CheckCircleIcon, FireIcon, PlusIcon, XIcon } from '@heroicons/react/outline';
 import './App.css';
 
 function HeatMap({ completionDates }) {
@@ -14,13 +16,10 @@ function HeatMap({ completionDates }) {
       {days.map((date) => {
         const isCompleted = completionDates.includes(date);
         return (
-          <div
+          <motion.div
             key={date}
-            className={`w-4 h-4 rounded-sm ${
-              isCompleted
-                ? 'bg-green-500'
-                : 'bg-gray-200'
-            }`}
+            className={`heatmap-cell ${isCompleted ? 'heatmap-cell-completed' : 'heatmap-cell-empty'}`}
+            whileHover={{ scale: 1.2 }}
             title={`${date}: ${isCompleted ? 'Completed' : 'Not completed'}`}
           />
         );
@@ -65,19 +64,45 @@ function Analytics({ habits }) {
   const stats = calculateStats();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">Total Habits</h3>
-        <p className="text-3xl font-bold text-blue-500">{stats.totalHabits}</p>
-      </div>
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">Completed Today</h3>
-        <p className="text-3xl font-bold text-green-500">{stats.completedToday}</p>
-      </div>
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">Longest Streak</h3>
-        <p className="text-3xl font-bold text-purple-500">{stats.longestStreak} days</p>
-      </div>
+    <div className="analytics-grid">
+      <motion.div
+        className="analytics-card"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex items-center space-x-3 text-primary-500">
+          <ChartBarIcon className="h-6 w-6" />
+          <h3 className="text-lg font-semibold text-gray-800">Total Habits</h3>
+        </div>
+        <p className="analytics-value text-primary-500">{stats.totalHabits}</p>
+      </motion.div>
+
+      <motion.div
+        className="analytics-card"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <div className="flex items-center space-x-3 text-green-500">
+          <CheckCircleIcon className="h-6 w-6" />
+          <h3 className="text-lg font-semibold text-gray-800">Completed Today</h3>
+        </div>
+        <p className="analytics-value text-green-500">{stats.completedToday}</p>
+      </motion.div>
+
+      <motion.div
+        className="analytics-card"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
+        <div className="flex items-center space-x-3 text-accent-500">
+          <FireIcon className="h-6 w-6" />
+          <h3 className="text-lg font-semibold text-gray-800">Longest Streak</h3>
+        </div>
+        <p className="analytics-value text-accent-500">{stats.longestStreak} days</p>
+      </motion.div>
     </div>
   );
 }
@@ -179,174 +204,211 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Habit Tracker</h1>
+        <motion.div 
+          className="flex justify-between items-center mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <h1 className="text-4xl font-bold text-gray-900 font-display">Habit Tracker</h1>
           <div className="flex space-x-4">
             <button
               onClick={() => setActiveTab('habits')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                activeTab === 'habits'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
-              }`}
+              className={`nav-tab ${activeTab === 'habits' ? 'nav-tab-active' : ''}`}
             >
               Habits
             </button>
             <button
               onClick={() => setActiveTab('analytics')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                activeTab === 'analytics'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
-              }`}
+              className={`nav-tab ${activeTab === 'analytics' ? 'nav-tab-active' : ''}`}
             >
               Analytics
             </button>
           </div>
-        </div>
+        </motion.div>
 
-        {activeTab === 'analytics' ? (
-          <div>
-            <Analytics habits={habits} />
-            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Activity Overview</h2>
-              <div className="overflow-x-auto">
-                <HeatMap completionDates={habits.flatMap(h => h.completion_dates || [])} />
+        <AnimatePresence mode="wait">
+          {activeTab === 'analytics' ? (
+            <motion.div
+              key="analytics"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Analytics habits={habits} />
+              <div className="bg-white rounded-2xl shadow-soft p-6 mb-8">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Activity Overview</h2>
+                <div className="overflow-x-auto">
+                  <HeatMap completionDates={habits.flatMap(h => h.completion_dates || [])} />
+                </div>
               </div>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <div className="flex justify-end mb-6">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                Add New Habit
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {habits.map((habit) => (
-                <div
-                  key={habit._id}
-                  className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+            </motion.div>
+          ) : (
+            <motion.div
+              key="habits"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex justify-end mb-6">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="btn-primary flex items-center space-x-2"
                 >
-                  <div className="flex justify-between items-start mb-4">
-                    <h2 className="text-xl font-semibold text-gray-800">{habit.name}</h2>
-                    <div className="flex space-x-2">
+                  <PlusIcon className="h-5 w-5" />
+                  <span>Add New Habit</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {habits.map((habit) => (
+                  <motion.div
+                    key={habit._id}
+                    className="habit-card bg-white rounded-2xl shadow-soft p-6"
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <h2 className="text-xl font-semibold text-gray-800">{habit.name}</h2>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(habit)}
+                          className="text-primary-500 hover:text-primary-600 transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(habit._id)}
+                          className="text-red-500 hover:text-red-600 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-gray-600 mb-4">{habit.description}</p>
+                    <div className="flex justify-between items-center text-sm text-gray-500">
+                      <span className="capitalize">Frequency: {habit.frequency}</span>
                       <button
-                        onClick={() => handleEdit(habit)}
-                        className="text-blue-500 hover:text-blue-600"
+                        onClick={() => handleComplete(habit._id)}
+                        className="btn-primary py-1.5"
                       >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(habit._id)}
-                        className="text-red-500 hover:text-red-600"
-                      >
-                        Delete
+                        Complete
                       </button>
                     </div>
-                  </div>
-                  <p className="text-gray-600 mb-4">{habit.description}</p>
-                  <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>Frequency: {habit.frequency}</span>
-                    <button
-                      onClick={() => handleComplete(habit._id)}
-                      className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition-colors"
-                    >
-                      Complete
-                    </button>
-                  </div>
-                  <div className="mt-4">
-                    <HeatMap completionDates={habit.completion_dates || []} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+                    <div className="mt-4">
+                      <HeatMap completionDates={habit.completion_dates || []} />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg p-8 max-w-md w-full">
-              <h2 className="text-2xl font-bold mb-6">
-                {editingHabit ? 'Edit Habit' : 'Add New Habit'}
-              </h2>
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Name</label>
-                  <input
-                    type="text"
-                    value={newHabit.name}
-                    onChange={(e) => setNewHabit({ ...newHabit, name: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Description</label>
-                  <textarea
-                    value={newHabit.description}
-                    onChange={(e) => setNewHabit({ ...newHabit, description: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Frequency</label>
-                  <select
-                    value={newHabit.frequency}
-                    onChange={(e) => setNewHabit({ ...newHabit, frequency: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2"
-                  >
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="custom">Custom</option>
-                  </select>
-                </div>
-                <div className="mb-6">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={newHabit.notification}
-                      onChange={(e) => setNewHabit({ ...newHabit, notification: e.target.checked })}
-                      className="mr-2"
-                    />
-                    <span className="text-gray-700">Enable notifications</span>
-                  </label>
-                </div>
-                <div className="flex justify-end space-x-4">
+        <AnimatePresence>
+          {isModalOpen && (
+            <div className="modal-backdrop">
+              <motion.div
+                className="modal-content"
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {editingHabit ? 'Edit Habit' : 'Add New Habit'}
+                  </h2>
                   <button
-                    type="button"
                     onClick={() => {
                       setIsModalOpen(false);
                       setEditingHabit(null);
-                      setNewHabit({
-                        name: '',
-                        description: '',
-                        frequency: 'daily',
-                        notification: false
-                      });
                     }}
-                    className="text-gray-600 hover:text-gray-800"
+                    className="text-gray-400 hover:text-gray-500 transition-colors"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    {editingHabit ? 'Update' : 'Create'}
+                    <XIcon className="h-6 w-6" />
                   </button>
                 </div>
-              </form>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                    <input
+                      type="text"
+                      value={newHabit.name}
+                      onChange={(e) => setNewHabit({ ...newHabit, name: e.target.value })}
+                      className="input-field"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea
+                      value={newHabit.description}
+                      onChange={(e) => setNewHabit({ ...newHabit, description: e.target.value })}
+                      className="input-field"
+                      rows="3"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Frequency</label>
+                    <select
+                      value={newHabit.frequency}
+                      onChange={(e) => setNewHabit({ ...newHabit, frequency: e.target.value })}
+                      className="input-field"
+                    >
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="notifications"
+                      checked={newHabit.notification}
+                      onChange={(e) => setNewHabit({ ...newHabit, notification: e.target.checked })}
+                      className="checkbox-field"
+                    />
+                    <label htmlFor="notifications" className="ml-3 text-sm text-gray-700">
+                      Enable notifications
+                    </label>
+                  </div>
+                  <div className="flex justify-end space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        setEditingHabit(null);
+                        setNewHabit({
+                          name: '',
+                          description: '',
+                          frequency: 'daily',
+                          notification: false
+                        });
+                      }}
+                      className="btn-secondary"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-primary"
+                    >
+                      {editingHabit ? 'Update' : 'Create'}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
             </div>
-          </div>
-        )}
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
