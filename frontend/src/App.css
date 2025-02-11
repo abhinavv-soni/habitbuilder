@@ -128,11 +128,58 @@ body {
 }
 
 .analytics-card {
-  @apply stat-card flex flex-col;
+  @apply bg-white rounded-2xl shadow-soft p-6 hover:shadow-md transition-shadow;
 }
 
 .analytics-value {
-  @apply text-4xl font-bold mt-2;
+  @apply text-3xl font-bold mt-2;
+}
+
+/* Progress bars */
+.progress-bar {
+  @apply w-full bg-gray-200 rounded-full h-2.5 mb-1;
+}
+
+.progress-bar-fill {
+  @apply h-full bg-blue-500 rounded-full transition-all duration-500;
+}
+
+/* Frequency analysis cards */
+.frequency-card {
+  @apply bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors;
+}
+
+.frequency-header {
+  @apply flex justify-between items-center mb-2;
+}
+
+.frequency-label {
+  @apply font-medium text-gray-700;
+}
+
+.frequency-count {
+  @apply text-sm text-gray-500;
+}
+
+/* Consistency card */
+.consistency-card {
+  @apply bg-white rounded-2xl shadow-soft p-6 hover:shadow-md transition-shadow;
+}
+
+.consistency-header {
+  @apply flex items-center space-x-3 mb-4 text-yellow-500;
+}
+
+.consistency-title {
+  @apply text-xl font-semibold text-gray-800;
+}
+
+.consistency-value {
+  @apply text-lg text-gray-700;
+}
+
+.consistency-subtitle {
+  @apply text-sm text-gray-500;
 }
 
 /* Responsive Design */
