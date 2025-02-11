@@ -343,6 +343,8 @@ function App() {
                       value={newHabit.name}
                       onChange={(e) => setNewHabit({ ...newHabit, name: e.target.value })}
                       className="input-field"
+                      data-testid="habit-name-input"
+                      aria-label="Habit name"
                       required
                     />
                   </div>
@@ -353,6 +355,8 @@ function App() {
                       onChange={(e) => setNewHabit({ ...newHabit, description: e.target.value })}
                       className="input-field"
                       rows="3"
+                      data-testid="habit-description-input"
+                      aria-label="Habit description"
                       required
                     />
                   </div>
@@ -362,6 +366,8 @@ function App() {
                       value={newHabit.frequency}
                       onChange={(e) => setNewHabit({ ...newHabit, frequency: e.target.value })}
                       className="input-field"
+                      data-testid="habit-frequency-select"
+                      aria-label="Habit frequency"
                     >
                       <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>
