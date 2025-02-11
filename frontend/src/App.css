@@ -1,138 +1,72 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Base Styles */
-body {
-  @apply bg-gray-50 text-gray-900 font-sans antialiased;
+@layer components {
+  .nav-tab {
+    @apply px-4 py-2 rounded-lg transition-colors text-gray-600 hover:bg-gray-100;
+  }
+
+  .nav-tab-active {
+    @apply bg-blue-500 text-white hover:bg-blue-600;
+  }
+
+  .btn-primary {
+    @apply bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors;
+  }
+
+  .input-field {
+    @apply w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+
+  .checkbox-field {
+    @apply h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded;
+  }
+
+  .modal-backdrop {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+  }
+
+  .modal-content {
+    @apply bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-xl;
+  }
+
+  .analytics-grid {
+    @apply grid grid-cols-1 md:grid-cols-3 gap-6 mb-8;
+  }
+
+  .analytics-card {
+    @apply bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow;
+  }
+
+  .analytics-value {
+    @apply text-3xl font-bold mt-2;
+  }
+
+  .shadow-soft {
+    @apply shadow-md hover:shadow-lg transition-shadow;
+  }
+
+  .habit-card {
+    @apply bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow;
+  }
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-gray-100 rounded-full;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full hover:bg-gray-400 transition-colors;
-}
-
-/* Animations */
-.fade-enter {
-  opacity: 0;
-}
-
-.fade-enter-active {
-  opacity: 1;
-  transition: opacity 300ms ease-in;
-}
-
-.fade-exit {
-  opacity: 1;
-}
-
-.fade-exit-active {
-  opacity: 0;
-  transition: opacity 300ms ease-in;
-}
-
-/* Custom Components */
-.habit-card {
-  @apply transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg;
-}
-
-.stat-card {
-  @apply bg-white rounded-2xl shadow-soft p-6 transition-all duration-300 hover:shadow-lg;
-}
-
-.btn-primary {
-  @apply bg-primary-500 text-white px-6 py-2.5 rounded-xl font-semibold 
-         hover:bg-primary-600 active:bg-primary-700 
-         transform transition-all duration-300 
-         hover:shadow-lg hover:-translate-y-0.5 
-         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
-}
-
-.btn-secondary {
-  @apply bg-white text-gray-700 px-6 py-2.5 rounded-xl font-semibold 
-         border border-gray-200
-         hover:bg-gray-50 active:bg-gray-100 
-         transform transition-all duration-300 
-         hover:shadow-md hover:-translate-y-0.5 
-         focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2;
-}
-
-/* Form Elements */
-.input-field {
-  @apply w-full px-4 py-2.5 rounded-xl border-gray-300 
-         focus:border-primary-500 focus:ring-primary-500 
-         placeholder-gray-400 transition-colors duration-200;
-}
-
-.checkbox-field {
-  @apply h-5 w-5 rounded border-gray-300 text-primary-500 
-         focus:ring-primary-500 transition-colors duration-200;
-}
-
-/* Modal */
-.modal-backdrop {
-  @apply fixed inset-0 bg-black/50 backdrop-blur-sm 
-         flex items-center justify-center z-50
-         pointer-events-none;
-}
-
-.modal-content {
-  @apply bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4 
-         transform transition-all duration-300 relative z-[60]
-         pointer-events-auto;
-}
-
-/* Calendar Heatmap */
+/* Calendar styles */
 .calendar-grid {
   @apply grid grid-cols-7 gap-1;
 }
 
 .calendar-day {
-  @apply aspect-square flex items-center justify-center text-xs font-medium
-         rounded-sm transition-all duration-200;
-}
-
-.calendar-day-completed {
-  @apply bg-green-500 text-white hover:bg-green-600;
-}
-
-.calendar-day-empty {
-  @apply bg-gray-100 text-gray-700 hover:bg-gray-200;
+  @apply aspect-square flex items-center justify-center text-xs font-medium rounded-sm transition-colors;
 }
 
 .calendar-header {
   @apply text-xs text-gray-500 text-center font-medium py-1;
-}
-
-/* Navigation */
-.nav-tab {
-  @apply px-6 py-2.5 rounded-xl font-semibold transition-all duration-200 
-         hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200;
-}
-
-.nav-tab-active {
-  @apply bg-primary-500 text-white hover:bg-primary-600 
-         focus:ring-primary-500;
-}
-
-/* Analytics */
-.analytics-grid {
-  @apply grid grid-cols-1 md:grid-cols-3 gap-6 mb-8;
-}
-
-.analytics-card {
-  @apply bg-white rounded-2xl shadow-soft p-6 hover:shadow-md transition-shadow;
-}
-
-.analytics-value {
-  @apply text-3xl font-bold mt-2;
 }
 
 /* Progress bars */
@@ -144,51 +78,15 @@ body {
   @apply h-full bg-blue-500 rounded-full transition-all duration-500;
 }
 
-/* Frequency analysis cards */
-.frequency-card {
-  @apply bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors;
+/* Custom colors */
+.text-primary-500 {
+  @apply text-blue-500;
 }
 
-.frequency-header {
-  @apply flex justify-between items-center mb-2;
+.text-primary-600 {
+  @apply text-blue-600;
 }
 
-.frequency-label {
-  @apply font-medium text-gray-700;
-}
-
-.frequency-count {
-  @apply text-sm text-gray-500;
-}
-
-/* Consistency card */
-.consistency-card {
-  @apply bg-white rounded-2xl shadow-soft p-6 hover:shadow-md transition-shadow;
-}
-
-.consistency-header {
-  @apply flex items-center space-x-3 mb-4 text-yellow-500;
-}
-
-.consistency-title {
-  @apply text-xl font-semibold text-gray-800;
-}
-
-.consistency-value {
-  @apply text-lg text-gray-700;
-}
-
-.consistency-subtitle {
-  @apply text-sm text-gray-500;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .habit-grid {
-    @apply grid-cols-1;
-  }
-  
-  .analytics-grid {
-    @apply grid-cols-1;
-  }
+.text-accent-500 {
+  @apply text-purple-500;
 }
