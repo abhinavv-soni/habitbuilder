@@ -103,18 +103,39 @@ async def delete_habit(habit_id: str):
 @app.post("/habits/{habit_id}/complete")
 async def complete_habit(habit_id: str):
     try:
-        from bson import ObjectId
+        from bson.objectid import ObjectId
+        from bson.errors import InvalidId
+        
+        try:
+            object_id = ObjectId(habit_id)
+        except InvalidId:
+            logger.error(f"Invalid habit ID format: {habit_id}")
+            raise HTTPException(status_code=400, detail="Invalid habit ID format")
+            
         today = datetime.now().strftime("%Y-%m-%d")
+        
+        # First check if habit exists
+        habit = await db.habits.find_one({"_id": object_id})
+        if not habit:
+            logger.error(f"Habit not found with ID: {habit_id}")
+            raise HTTPException(status_code=404, detail="Habit not found")
+            
+        # Update the habit with completion date
         result = await db.habits.update_one(
-            {"_id": ObjectId(habit_id)},
+            {"_id": object_id},
             {"$addToSet": {"completion_dates": today}}
         )
+        
         if result.modified_count == 0:
-            raise HTTPException(status_code=404, detail="Habit not found")
+            logger.warning(f"Habit {habit_id} already completed for today")
+            return {"message": "Habit already completed for today"}
+            
+        logger.info(f"Successfully completed habit {habit_id} for {today}")
         return {"message": "Habit marked as complete"}
+        
     except Exception as e:
-        logger.error(f"Error completing habit: {e}")
-        raise HTTPException(status_code=500, detail="Error completing habit")
+        logger.error(f"Error completing habit: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error completing habit: {str(e)}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
