@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChartBarIcon, CheckCircleIcon, FireIcon, PlusIcon, XIcon } from '@heroicons/react/outline';
+import { ChartBarIcon, CheckCircleIcon, FireIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import './App.css';
 
 function HeatMap({ completionDates }) {
@@ -332,7 +332,7 @@ function App() {
                     }}
                     className="text-gray-400 hover:text-gray-500 transition-colors"
                   >
-                    <XIcon className="h-6 w-6" />
+                    <XMarkIcon className="h-6 w-6" />
                   </button>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-6">
