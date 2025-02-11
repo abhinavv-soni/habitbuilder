@@ -89,18 +89,26 @@ body {
          pointer-events-auto;
 }
 
-/* Heatmap */
-.heatmap-cell {
-  @apply w-3.5 h-3.5 rounded-sm transition-all duration-200 
-         hover:transform hover:scale-125 hover:z-10;
+/* Calendar Heatmap */
+.calendar-grid {
+  @apply grid grid-cols-7 gap-1;
 }
 
-.heatmap-cell-completed {
-  @apply bg-primary-500 hover:bg-primary-400;
+.calendar-day {
+  @apply aspect-square flex items-center justify-center text-xs font-medium
+         rounded-sm transition-all duration-200;
 }
 
-.heatmap-cell-empty {
-  @apply bg-gray-100 hover:bg-gray-200;
+.calendar-day-completed {
+  @apply bg-green-500 text-white hover:bg-green-600;
+}
+
+.calendar-day-empty {
+  @apply bg-gray-100 text-gray-700 hover:bg-gray-200;
+}
+
+.calendar-header {
+  @apply text-xs text-gray-500 text-center font-medium py-1;
 }
 
 /* Navigation */
