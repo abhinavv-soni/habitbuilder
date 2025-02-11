@@ -3,30 +3,82 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChartBarIcon, CheckCircleIcon, FireIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import './App.css';
 
-function HeatMap({ completionDates }) {
+function HeatMap({ completionDates, frequency }) {
   const today = new Date();
-  const days = Array.from({ length: 365 }, (_, i) => {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    return date.toISOString().split('T')[0];
-  }).reverse();
+  const startDate = new Date(today);
+  startDate.setDate(1); // Start from first day of current month
+  
+  // Get number of days in current month
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  
+  // Get day of week for first day (0 = Sunday, 6 = Saturday)
+  const firstDayOfWeek = startDate.getDay();
+  
+  // Create array for calendar days including empty slots for proper alignment
+  const calendarDays = Array(firstDayOfWeek).fill(null);
+  for (let i = 1; i <= daysInMonth; i++) {
+    const date = new Date(today.getFullYear(), today.getMonth(), i);
+    calendarDays.push(date.toISOString().split('T')[0]);
+  }
+
+  // Helper function to check if a date should be marked as completed based on frequency
+  const isDateCompleted = (date) => {
+    if (!date) return false;
+    
+    const dateObj = new Date(date);
+    const isCompleted = completionDates.includes(date);
+    
+    switch (frequency) {
+      case 'daily':
+        return isCompleted;
+      case 'weekly':
+        // Check if any day in the same week is completed
+        const weekStart = new Date(date);
+        weekStart.setDate(dateObj.getDate() - dateObj.getDay());
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        
+        return completionDates.some(completedDate => {
+          const completed = new Date(completedDate);
+          return completed >= weekStart && completed <= weekEnd;
+        });
+      case 'custom':
+        return isCompleted;
+      default:
+        return isCompleted;
+    }
+  };
+
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="grid grid-cols-7 gap-1 overflow-x-auto p-4">
-      {days.map((date) => {
-        const isCompleted = completionDates.includes(date);
-        return (
-          <motion.div
-            key={date}
-            className={`heatmap-cell ${isCompleted ? 'heatmap-cell-completed' : 'heatmap-cell-empty'}`}
-            whileHover={{ scale: 1.2 }}
-            title={`${date}: ${isCompleted ? 'Completed' : 'Not completed'}`}
-          />
-        );
-      })}
+    <div className="w-full max-w-md mx-auto">
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {weekDays.map(day => (
+          <div key={day} className="text-xs text-gray-500 text-center font-medium">
+            {day}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {calendarDays.map((date, index) => (
+          <div
+            key={date || index}
+            className={`aspect-square flex items-center justify-center rounded-sm text-xs ${
+              date
+                ? isDateCompleted(date)
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-700'
+                : 'bg-transparent'
+            }`}
+            title={date ? `${date}: ${isDateCompleted(date) ? 'Completed' : 'Not completed'}` : ''}
+          >
+            {date ? new Date(date).getDate() : ''}
+          </div>
+        ))}
+      </div>
     </div>
   );
-}
 
 function Analytics({ habits }) {
   const calculateStats = () => {
@@ -242,7 +294,7 @@ function App() {
               <div className="bg-white rounded-2xl shadow-soft p-6 mb-8">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-4">Activity Overview</h2>
                 <div className="overflow-x-auto">
-                  <HeatMap completionDates={habits.flatMap(h => h.completion_dates || [])} />
+                  <HeatMap completionDates={habits.flatMap(h => h.completion_dates || [])} frequency="daily" />
                 </div>
               </div>
             </motion.div>
@@ -302,7 +354,7 @@ function App() {
                       </button>
                     </div>
                     <div className="mt-4">
-                      <HeatMap completionDates={habit.completion_dates || []} />
+                      <HeatMap completionDates={habit.completion_dates || []} frequency={habit.frequency} />
                     </div>
                   </motion.div>
                 ))}
