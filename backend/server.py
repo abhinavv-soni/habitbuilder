@@ -1,20 +1,22 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime
 import uvicorn
 import os
 import logging
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent.parent
-
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
-mongo_url = os.environ.get('MONGO_URL', "")
+mongo_url = os.environ.get('MONGO_URL', "mongodb://localhost:27017")
 client = AsyncIOMotorClient(mongo_url)
-db = client.test_database
+db = client.habit_tracker
 
 app = FastAPI()
 
@@ -33,13 +35,90 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+class Habit(BaseModel):
+    name: str
+    description: str
+    frequency: str  # daily, weekly, custom
+    notification: bool = False
+    created_at: datetime = datetime.now()
+    completion_dates: List[str] = []
+
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Habit Tracker API"}
+
+@app.post("/habits")
+async def create_habit(habit: Habit):
+    try:
+        result = await db.habits.insert_one(habit.dict())
+        created_habit = await db.habits.find_one({"_id": result.inserted_id})
+        created_habit["_id"] = str(created_habit["_id"])
+        return created_habit
+    except Exception as e:
+        logger.error(f"Error creating habit: {e}")
+        raise HTTPException(status_code=500, detail="Error creating habit")
+
+@app.get("/habits")
+async def get_habits():
+    try:
+        habits = []
+        cursor = db.habits.find()
+        async for habit in cursor:
+            habit["_id"] = str(habit["_id"])
+            habits.append(habit)
+        return habits
+    except Exception as e:
+        logger.error(f"Error fetching habits: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching habits")
+
+@app.put("/habits/{habit_id}")
+async def update_habit(habit_id: str, habit: Habit):
+    try:
+        from bson import ObjectId
+        result = await db.habits.update_one(
+            {"_id": ObjectId(habit_id)},
+            {"$set": habit.dict(exclude={"created_at"})}
+        )
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Habit not found")
+        updated_habit = await db.habits.find_one({"_id": ObjectId(habit_id)})
+        updated_habit["_id"] = str(updated_habit["_id"])
+        return updated_habit
+    except Exception as e:
+        logger.error(f"Error updating habit: {e}")
+        raise HTTPException(status_code=500, detail="Error updating habit")
+
+@app.delete("/habits/{habit_id}")
+async def delete_habit(habit_id: str):
+    try:
+        from bson import ObjectId
+        result = await db.habits.delete_one({"_id": ObjectId(habit_id)})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Habit not found")
+        return {"message": "Habit deleted successfully"}
+    except Exception as e:
+        logger.error(f"Error deleting habit: {e}")
+        raise HTTPException(status_code=500, detail="Error deleting habit")
+
+@app.post("/habits/{habit_id}/complete")
+async def complete_habit(habit_id: str):
+    try:
+        from bson import ObjectId
+        today = datetime.now().strftime("%Y-%m-%d")
+        result = await db.habits.update_one(
+            {"_id": ObjectId(habit_id)},
+            {"$addToSet": {"completion_dates": today}}
+        )
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Habit not found")
+        return {"message": "Habit marked as complete"}
+    except Exception as e:
+        logger.error(f"Error completing habit: {e}")
+        raise HTTPException(status_code=500, detail="Error completing habit")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="localhost", port=8001)
+    uvicorn.run("server:app", host="0.0.0.0", port=55125, reload=True)
