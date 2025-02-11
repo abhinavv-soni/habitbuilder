@@ -1,58 +1,142 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChartBarIcon, CheckCircleIcon, FireIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { 
+  ChartBarIcon, 
+  CheckCircleIcon, 
+  FireIcon, 
+  PlusIcon, 
+  XMarkIcon,
+  CalendarIcon,
+  TrophyIcon,
+  ClockIcon
+} from '@heroicons/react/24/outline';
 import './App.css';
+
+// Custom hook for local storage
+const useLocalStorage = (key, initialValue) => {
+  const [storedValue, setStoredValue] = useState(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.log(error);
+      return initialValue;
+    }
+  });
+
+  const setValue = value => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  return [storedValue, setValue];
+};
+
+const FREQUENCIES = {
+  daily: { label: 'Daily', days: 1 },
+  'alternate-days': { label: 'Alternate Days', days: 2 },
+  'twice-weekly': { label: 'Twice a Week', days: 3.5 },
+  weekly: { label: 'Weekly', days: 7 },
+  'bi-weekly': { label: 'Bi-weekly', days: 14 },
+  monthly: { label: 'Monthly', days: 30 }
+};
 
 function HeatMap({ completionDates, frequency }) {
   const today = new Date();
   const startDate = new Date(today);
-  startDate.setDate(1); // Start from first day of current month
+  startDate.setDate(1);
   
-  // Get number of days in current month
   const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-  
-  // Get day of week for first day (0 = Sunday, 6 = Saturday)
   const firstDayOfWeek = startDate.getDay();
   
-  // Create array for calendar days including empty slots for proper alignment
   const calendarDays = Array(firstDayOfWeek).fill(null);
   for (let i = 1; i <= daysInMonth; i++) {
     const date = new Date(today.getFullYear(), today.getMonth(), i);
     calendarDays.push(date.toISOString().split('T')[0]);
   }
 
-  // Helper function to check if a date should be marked as completed based on frequency
   const isDateCompleted = (date) => {
     if (!date) return false;
     
     const dateObj = new Date(date);
     const isCompleted = completionDates.includes(date);
     
-    switch (frequency) {
-      case 'daily':
-        return isCompleted;
-      case 'weekly':
-        // Check if any day in the same week is completed
-        const weekStart = new Date(date);
-        weekStart.setDate(dateObj.getDate() - dateObj.getDay());
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
-        
-        return completionDates.some(completedDate => {
-          const completed = new Date(completedDate);
-          return completed >= weekStart && completed <= weekEnd;
-        });
-      case 'custom':
-        return isCompleted;
-      default:
-        return isCompleted;
+    if (frequency === 'daily') return isCompleted;
+    
+    if (frequency === 'alternate-days') {
+      // Check if any completion in 2-day window
+      const twoDaysBefore = new Date(dateObj);
+      twoDaysBefore.setDate(dateObj.getDate() - 1);
+      return completionDates.some(d => 
+        d === date || d === twoDaysBefore.toISOString().split('T')[0]
+      );
     }
+    
+    if (frequency === 'twice-weekly') {
+      // Check if we have 2 completions in the week
+      const weekStart = new Date(dateObj);
+      weekStart.setDate(dateObj.getDate() - dateObj.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      
+      const completionsThisWeek = completionDates.filter(d => {
+        const date = new Date(d);
+        return date >= weekStart && date <= weekEnd;
+      });
+      
+      return completionsThisWeek.length >= 2;
+    }
+    
+    if (frequency === 'weekly') {
+      const weekStart = new Date(date);
+      weekStart.setDate(dateObj.getDate() - dateObj.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      
+      return completionDates.some(completedDate => {
+        const completed = new Date(completedDate);
+        return completed >= weekStart && completed <= weekEnd;
+      });
+    }
+    
+    if (frequency === 'bi-weekly') {
+      const twoWeeksAgo = new Date(dateObj);
+      twoWeeksAgo.setDate(dateObj.getDate() - 14);
+      return completionDates.some(d => {
+        const completedDate = new Date(d);
+        return completedDate >= twoWeeksAgo && completedDate <= dateObj;
+      });
+    }
+    
+    if (frequency === 'monthly') {
+      const monthStart = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
+      const monthEnd = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0);
+      return completionDates.some(d => {
+        const completedDate = new Date(d);
+        return completedDate >= monthStart && completedDate <= monthEnd;
+      });
+    }
+    
+    return isCompleted;
   };
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  const monthYear = new Date(today.getFullYear(), today.getMonth()).toLocaleString('default', { 
+    month: 'long',
+    year: 'numeric'
+  });
 
   return (
     <div className="w-full max-w-md mx-auto">
+      <div className="text-sm font-semibold text-gray-700 mb-2 text-center">
+        {monthYear}
+      </div>
       <div className="grid grid-cols-7 gap-1 mb-2">
         {weekDays.map(day => (
           <div key={day} className="text-xs text-gray-500 text-center font-medium">
@@ -79,22 +163,58 @@ function HeatMap({ completionDates, frequency }) {
       </div>
     </div>
   );
+}
 
 function Analytics({ habits }) {
   const calculateStats = () => {
+    const today = new Date();
     const totalHabits = habits.length;
     const completedToday = habits.filter(habit => 
-      habit.completion_dates?.includes(new Date().toISOString().split('T')[0])
+      habit.completion_dates?.includes(today.toISOString().split('T')[0])
     ).length;
-    
+
+    // Calculate completion rates for each frequency
+    const frequencyStats = Object.keys(FREQUENCIES).reduce((acc, freq) => {
+      const habitsOfFreq = habits.filter(h => h.frequency === freq);
+      if (habitsOfFreq.length === 0) return acc;
+
+      const expectedCompletions = Math.floor(30 / FREQUENCIES[freq].days);
+      const actualCompletions = habitsOfFreq.reduce((sum, habit) => {
+        const lastMonth = habit.completion_dates?.filter(date => {
+          const completionDate = new Date(date);
+          const monthAgo = new Date(today);
+          monthAgo.setMonth(monthAgo.getMonth() - 1);
+          return completionDate >= monthAgo;
+        }).length || 0;
+        return sum + lastMonth;
+      }, 0);
+
+      const avgCompletions = habitsOfFreq.length > 0 
+        ? actualCompletions / habitsOfFreq.length 
+        : 0;
+
+      return {
+        ...acc,
+        [freq]: {
+          count: habitsOfFreq.length,
+          completionRate: Math.min(100, (avgCompletions / expectedCompletions) * 100),
+          expected: expectedCompletions,
+          actual: Math.floor(avgCompletions)
+        }
+      };
+    }, {});
+
+    // Calculate streaks
     const streaks = habits.map(habit => {
       if (!habit.completion_dates) return 0;
       const dates = habit.completion_dates.sort();
       let currentStreak = 0;
       let maxStreak = 0;
-      
+      const frequency = FREQUENCIES[habit.frequency].days;
+
       for (let i = 0; i < dates.length; i++) {
-        if (i === 0 || new Date(dates[i]).getTime() - new Date(dates[i-1]).getTime() === 86400000) {
+        if (i === 0 || 
+            (new Date(dates[i]).getTime() - new Date(dates[i-1]).getTime()) <= frequency * 86400000) {
           currentStreak++;
         } else {
           currentStreak = 1;
@@ -106,129 +226,177 @@ function Analytics({ habits }) {
 
     const longestStreak = Math.max(...streaks, 0);
 
+    // Most consistent habit
+    const consistencyScores = habits.map(habit => {
+      const expectedInterval = FREQUENCIES[habit.frequency].days * 86400000; // in milliseconds
+      if (!habit.completion_dates || habit.completion_dates.length < 2) return 0;
+
+      const dates = habit.completion_dates
+        .map(d => new Date(d).getTime())
+        .sort((a, b) => a - b);
+
+      const intervals = [];
+      for (let i = 1; i < dates.length; i++) {
+        intervals.push(Math.abs(dates[i] - dates[i-1]));
+      }
+
+      const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      const variance = intervals.reduce((acc, interval) => 
+        acc + Math.pow(interval - avgInterval, 2), 0) / intervals.length;
+      
+      return {
+        habitId: habit.id,
+        name: habit.name,
+        consistency: 1 / (1 + Math.sqrt(variance) / expectedInterval)
+      };
+    });
+
+    const mostConsistentHabit = consistencyScores.length > 0 
+      ? habits.find(h => h.id === consistencyScores.sort((a, b) => b.consistency - a.consistency)[0].habitId)
+      : null;
+
     return {
       totalHabits,
       completedToday,
       longestStreak,
+      frequencyStats,
+      mostConsistentHabit
     };
   };
 
   const stats = calculateStats();
 
   return (
-    <div className="analytics-grid">
-      <motion.div
-        className="analytics-card"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="flex items-center space-x-3 text-primary-500">
-          <ChartBarIcon className="h-6 w-6" />
-          <h3 className="text-lg font-semibold text-gray-800">Total Habits</h3>
-        </div>
-        <p className="analytics-value text-primary-500">{stats.totalHabits}</p>
-      </motion.div>
+    <div className="space-y-8">
+      <div className="analytics-grid">
+        <motion.div
+          className="analytics-card"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="flex items-center space-x-3 text-primary-500">
+            <ChartBarIcon className="h-6 w-6" />
+            <h3 className="text-lg font-semibold text-gray-800">Total Habits</h3>
+          </div>
+          <p className="analytics-value text-primary-500">{stats.totalHabits}</p>
+        </motion.div>
 
-      <motion.div
-        className="analytics-card"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
-      >
-        <div className="flex items-center space-x-3 text-green-500">
-          <CheckCircleIcon className="h-6 w-6" />
-          <h3 className="text-lg font-semibold text-gray-800">Completed Today</h3>
-        </div>
-        <p className="analytics-value text-green-500">{stats.completedToday}</p>
-      </motion.div>
+        <motion.div
+          className="analytics-card"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <div className="flex items-center space-x-3 text-green-500">
+            <CheckCircleIcon className="h-6 w-6" />
+            <h3 className="text-lg font-semibold text-gray-800">Completed Today</h3>
+          </div>
+          <p className="analytics-value text-green-500">{stats.completedToday}</p>
+        </motion.div>
 
-      <motion.div
-        className="analytics-card"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-      >
-        <div className="flex items-center space-x-3 text-accent-500">
-          <FireIcon className="h-6 w-6" />
-          <h3 className="text-lg font-semibold text-gray-800">Longest Streak</h3>
+        <motion.div
+          className="analytics-card"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <div className="flex items-center space-x-3 text-accent-500">
+            <FireIcon className="h-6 w-6" />
+            <h3 className="text-lg font-semibold text-gray-800">Longest Streak</h3>
+          </div>
+          <p className="analytics-value text-accent-500">{stats.longestStreak} days</p>
+        </motion.div>
+      </div>
+
+      {/* Frequency Analysis */}
+      <div className="bg-white rounded-2xl shadow-soft p-6">
+        <h3 className="text-xl font-semibold text-gray-800 mb-4">Frequency Analysis</h3>
+        <div className="space-y-4">
+          {Object.entries(stats.frequencyStats).map(([freq, data]) => (
+            <div key={freq} className="bg-gray-50 rounded-lg p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium text-gray-700">{FREQUENCIES[freq].label}</span>
+                <span className="text-sm text-gray-500">{data.count} habits</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div 
+                  className="bg-blue-500 h-2.5 rounded-full transition-all duration-500"
+                  style={{ width: `${data.completionRate}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-sm text-gray-500 mt-1">
+                <span>Completed: {data.actual}/{data.expected}</span>
+                <span>{Math.round(data.completionRate)}% completion rate</span>
+              </div>
+            </div>
+          ))}
         </div>
-        <p className="analytics-value text-accent-500">{stats.longestStreak} days</p>
-      </motion.div>
+      </div>
+
+      {/* Most Consistent Habit */}
+      {stats.mostConsistentHabit && (
+        <motion.div
+          className="bg-white rounded-2xl shadow-soft p-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+        >
+          <div className="flex items-center space-x-3 mb-4">
+            <TrophyIcon className="h-6 w-6 text-yellow-500" />
+            <h3 className="text-xl font-semibold text-gray-800">Most Consistent Habit</h3>
+          </div>
+          <div className="text-lg text-gray-700">{stats.mostConsistentHabit.name}</div>
+          <div className="text-sm text-gray-500">
+            {FREQUENCIES[stats.mostConsistentHabit.frequency].label} habit
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
 
 function App() {
-  const [habits, setHabits] = useState([]);
+  const [habits, setHabits] = useLocalStorage('habits', []);
   const [newHabit, setNewHabit] = useState({
     name: '',
     description: '',
     frequency: 'daily',
-    notification: false
+    completion_dates: []
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState(null);
   const [activeTab, setActiveTab] = useState('habits');
 
-  useEffect(() => {
-    fetchHabits();
-  }, []);
-
-  const fetchHabits = async () => {
-    try {
-      const response = await fetch('http://localhost:55125/habits');
-      const data = await response.json();
-      setHabits(data);
-    } catch (error) {
-      console.error('Error fetching habits:', error);
-    }
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      const url = editingHabit
-        ? `http://localhost:55125/habits/${editingHabit._id}`
-        : 'http://localhost:55125/habits';
-      
-      const method = editingHabit ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newHabit),
-      });
-      
-      if (response.ok) {
-        setNewHabit({
-          name: '',
-          description: '',
-          frequency: 'daily',
-          notification: false
-        });
-        setIsModalOpen(false);
-        setEditingHabit(null);
-        fetchHabits();
-      }
-    } catch (error) {
-      console.error('Error saving habit:', error);
+    
+    if (editingHabit) {
+      setHabits(habits.map(habit => 
+        habit.id === editingHabit.id 
+          ? { ...newHabit, id: habit.id }
+          : habit
+      ));
+    } else {
+      setHabits([...habits, { 
+        ...newHabit, 
+        id: Date.now().toString(),
+        created_at: new Date().toISOString()
+      }]);
     }
+    
+    setNewHabit({
+      name: '',
+      description: '',
+      frequency: 'daily',
+      completion_dates: []
+    });
+    setIsModalOpen(false);
+    setEditingHabit(null);
   };
 
-  const handleDelete = async (id) => {
-    try {
-      const response = await fetch(`http://localhost:55125/habits/${id}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        fetchHabits();
-      }
-    } catch (error) {
-      console.error('Error deleting habit:', error);
-    }
+  const handleDelete = (id) => {
+    setHabits(habits.filter(habit => habit.id !== id));
   };
 
   const handleEdit = (habit) => {
@@ -237,22 +405,25 @@ function App() {
       name: habit.name,
       description: habit.description,
       frequency: habit.frequency,
-      notification: habit.notification
+      completion_dates: habit.completion_dates || []
     });
     setIsModalOpen(true);
   };
 
-  const handleComplete = async (id) => {
-    try {
-      const response = await fetch(`http://localhost:55125/habits/${id}/complete`, {
-        method: 'POST',
-      });
-      if (response.ok) {
-        fetchHabits();
+  const handleComplete = (id) => {
+    const today = new Date().toISOString().split('T')[0];
+    setHabits(habits.map(habit => {
+      if (habit.id === id) {
+        const completion_dates = habit.completion_dates || [];
+        if (!completion_dates.includes(today)) {
+          return {
+            ...habit,
+            completion_dates: [...completion_dates, today]
+          };
+        }
       }
-    } catch (error) {
-      console.error('Error completing habit:', error);
-    }
+      return habit;
+    }));
   };
 
   return (
@@ -291,12 +462,6 @@ function App() {
               transition={{ duration: 0.3 }}
             >
               <Analytics habits={habits} />
-              <div className="bg-white rounded-2xl shadow-soft p-6 mb-8">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Activity Overview</h2>
-                <div className="overflow-x-auto">
-                  <HeatMap completionDates={habits.flatMap(h => h.completion_dates || [])} frequency="daily" />
-                </div>
-              </div>
             </motion.div>
           ) : (
             <motion.div
@@ -319,7 +484,7 @@ function App() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {habits.map((habit) => (
                   <motion.div
-                    key={habit._id}
+                    key={habit.id}
                     className="habit-card bg-white rounded-2xl shadow-soft p-6"
                     layout
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -336,7 +501,7 @@ function App() {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDelete(habit._id)}
+                          onClick={() => handleDelete(habit.id)}
                           className="text-red-500 hover:text-red-600 transition-colors"
                         >
                           Delete
@@ -345,16 +510,21 @@ function App() {
                     </div>
                     <p className="text-gray-600 mb-4">{habit.description}</p>
                     <div className="flex justify-between items-center text-sm text-gray-500">
-                      <span className="capitalize">Frequency: {habit.frequency}</span>
+                      <span className="capitalize">
+                        {FREQUENCIES[habit.frequency].label}
+                      </span>
                       <button
-                        onClick={() => handleComplete(habit._id)}
+                        onClick={() => handleComplete(habit.id)}
                         className="btn-primary py-1.5"
                       >
                         Complete
                       </button>
                     </div>
                     <div className="mt-4">
-                      <HeatMap completionDates={habit.completion_dates || []} frequency={habit.frequency} />
+                      <HeatMap 
+                        completionDates={habit.completion_dates || []} 
+                        frequency={habit.frequency} 
+                      />
                     </div>
                   </motion.div>
                 ))}
@@ -395,8 +565,6 @@ function App() {
                       value={newHabit.name}
                       onChange={(e) => setNewHabit({ ...newHabit, name: e.target.value })}
                       className="input-field"
-                      data-testid="habit-name-input"
-                      aria-label="Habit name"
                       required
                     />
                   </div>
@@ -407,8 +575,6 @@ function App() {
                       onChange={(e) => setNewHabit({ ...newHabit, description: e.target.value })}
                       className="input-field"
                       rows="3"
-                      data-testid="habit-description-input"
-                      aria-label="Habit description"
                       required
                     />
                   </div>
@@ -418,25 +584,13 @@ function App() {
                       value={newHabit.frequency}
                       onChange={(e) => setNewHabit({ ...newHabit, frequency: e.target.value })}
                       className="input-field"
-                      data-testid="habit-frequency-select"
-                      aria-label="Habit frequency"
                     >
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="custom">Custom</option>
+                      {Object.entries(FREQUENCIES).map(([value, { label }]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
                     </select>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="notifications"
-                      checked={newHabit.notification}
-                      onChange={(e) => setNewHabit({ ...newHabit, notification: e.target.checked })}
-                      className="checkbox-field"
-                    />
-                    <label htmlFor="notifications" className="ml-3 text-sm text-gray-700">
-                      Enable notifications
-                    </label>
                   </div>
                   <div className="flex justify-end space-x-4">
                     <button
@@ -444,12 +598,6 @@ function App() {
                       onClick={() => {
                         setIsModalOpen(false);
                         setEditingHabit(null);
-                        setNewHabit({
-                          name: '',
-                          description: '',
-                          frequency: 'daily',
-                          notification: false
-                        });
                       }}
                       className="btn-secondary"
                     >
