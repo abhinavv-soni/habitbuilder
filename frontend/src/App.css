@@ -2,37 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 199 89% 48%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 199 89% 48%;
+  }
+}
+
 @layer components {
   .nav-tab {
-    @apply px-4 py-2 rounded-lg transition-colors text-gray-600 hover:bg-gray-100;
+    @apply px-4 py-2.5 rounded-xl transition-all duration-300 text-gray-600 hover:bg-gray-100 font-medium text-sm;
   }
 
   .nav-tab-active {
-    @apply bg-blue-500 text-white hover:bg-blue-600;
+    @apply bg-primary-500 text-white hover:bg-primary-600 shadow-sm hover:shadow-md;
   }
 
   .btn-primary {
-    @apply bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors;
+    @apply bg-primary-500 text-white px-5 py-2.5 rounded-xl hover:bg-primary-600 transition-all duration-300 font-semibold shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98];
   }
 
   .btn-secondary {
-    @apply bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors;
+    @apply bg-secondary text-secondary-foreground px-5 py-2.5 rounded-xl hover:bg-secondary/80 transition-all duration-300 font-semibold shadow-sm hover:shadow-md;
   }
 
   .input-field {
-    @apply w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500;
+    @apply w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-400/50 bg-white/50 backdrop-blur-sm transition-all duration-300;
   }
 
   .checkbox-field {
-    @apply h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded;
+    @apply h-5 w-5 text-primary-500 focus:ring-primary-400/50 border-gray-300 rounded-md transition-all duration-300;
   }
 
   .modal-backdrop {
-    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+    @apply fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50;
   }
 
   .modal-content {
-    @apply bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-xl;
+    @apply bg-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-soft;
   }
 
   .analytics-grid {
@@ -40,53 +89,50 @@
   }
 
   .analytics-card {
-    @apply bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow;
+    @apply bg-white rounded-2xl shadow-soft p-8 hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border border-gray-100/50;
   }
 
   .analytics-value {
-    @apply text-3xl font-bold mt-2;
+    @apply text-4xl font-bold mt-3 font-display;
   }
 
   .shadow-soft {
-    @apply shadow-md hover:shadow-lg transition-shadow;
+    @apply shadow-md hover:shadow-lg transition-all duration-300;
   }
 
   .habit-card {
-    @apply bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow;
+    @apply bg-white rounded-2xl shadow-soft p-8 hover:shadow-lg transition-all duration-300 hover:scale-[1.01] border border-gray-100/50;
   }
-}
 
-/* Calendar styles */
-.calendar-grid {
-  @apply grid grid-cols-7 gap-1;
-}
+  .calendar-grid {
+    @apply grid grid-cols-7 gap-1.5;
+  }
 
-.calendar-day {
-  @apply aspect-square flex items-center justify-center text-xs font-medium rounded-sm transition-colors;
-}
+  .calendar-day {
+    @apply aspect-square flex items-center justify-center text-sm font-medium rounded-lg transition-all duration-300;
+  }
 
-.calendar-header {
-  @apply text-xs text-gray-500 text-center font-medium py-1;
-}
+  .calendar-header {
+    @apply text-sm text-gray-500 text-center font-medium py-2;
+  }
 
-/* Progress bars */
-.progress-bar {
-  @apply w-full bg-gray-200 rounded-full h-2.5 mb-1;
-}
+  .progress-bar {
+    @apply w-full bg-gray-100 rounded-full h-3 mb-1;
+  }
 
-.progress-bar-fill {
-  @apply h-full bg-blue-500 rounded-full transition-all duration-500;
-}
+  .progress-bar-fill {
+    @apply h-full rounded-full transition-all duration-500 bg-gradient-to-r from-primary-400 to-primary-500 shadow-glow;
+  }
 
-/* Custom colors */
-.text-primary-500 {
-  @apply text-blue-500;
-}
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-accent-500;
+  }
 
-.text-primary-600 {
-  @apply text-blue-600;
-}
+  .bg-gradient {
+    @apply bg-gradient-to-r from-primary-500 to-accent-500;
+  }
 
-.text-accent-500 {
-  @apply text-purple-500;
+  .card-gradient {
+    @apply bg-gradient-to-br from-white to-gray-50/80;
+  }
 }
